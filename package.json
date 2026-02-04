@@ -1,0 +1,22 @@
+{
+  "name": "purescript-yoga-scylladb",
+  "version": "0.1.0",
+  "description": "PureScript FFI bindings for ScyllaDB/Cassandra",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rowtype-yoga/purescript-yoga-backend-stack.git",
+    "directory": "packages/yoga-scylladb"
+  },
+  "keywords": [
+    "purescript",
+    "ffi",
+    "bindings",
+    "yoga"
+  ],
+  "scripts": {
+    "test": "spago test",
+    "test:bash": "./test-with-docker.sh",
+    "test:ts": "bun run test-with-docker.ts"
+  }
+}
