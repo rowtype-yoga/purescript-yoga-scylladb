@@ -25,6 +25,8 @@ package:
     - nullable: ">=6.0.0 <7.0.0"
     - ordered-collections: ">=3.2.0 <4.0.0"
     - prelude: ">=6.0.2 <7.0.0"
+    - type-equality: ">=4.0.1 <5.0.0"
+    - typelevel-prelude: ">=7.0.0 <8.0.0"
     - unsafe-coerce: ">=6.0.0 <7.0.0"
     - yoga-json: ">=5.2.0 <6.0.0"
     - yoga-sql-types: ">=0.2.0 <0.3.0"

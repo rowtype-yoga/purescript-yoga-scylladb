@@ -54,6 +54,12 @@
               "prelude": ">=6.0.2 <7.0.0"
             },
             {
+              "type-equality": ">=4.0.1 <5.0.0"
+            },
+            {
+              "typelevel-prelude": ">=7.0.0 <8.0.0"
+            },
+            {
               "unsafe-coerce": ">=6.0.0 <7.0.0"
             },
             {

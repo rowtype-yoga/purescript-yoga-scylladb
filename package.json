@@ -18,5 +18,8 @@
     "test": "spago test",
     "test:bash": "./test-with-docker.sh",
     "test:ts": "bun run test-with-docker.ts"
+  },
+  "dependencies": {
+    "cassandra-driver": "^4.8.0"
   }
 }

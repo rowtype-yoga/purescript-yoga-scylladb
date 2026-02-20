@@ -17,6 +17,7 @@ import Test.Spec.Reporter.Console (consoleReporter)
 import Test.Spec.Runner (runSpec)
 import Yoga.Test.Docker as Docker
 import Yoga.ScyllaDB.ScyllaDB as Scylla
+import Yoga.ScyllaDB.Schema.Test as SchemaTest
 
 -- Test configuration
 testContactPoint :: Scylla.ContactPoint
@@ -397,13 +398,15 @@ main = launchAff_ do
     -- Start Docker before tests
     ( do
         liftEffect $ log "⏳ Starting ScyllaDB and waiting for it to be ready (may take 30-60s)..."
-        Docker.startService "packages/yoga-scylladb/docker-compose.test.yml" 60
+        Docker.startService (Docker.ComposeFile "packages/yoga-scylladb/docker-compose.test.yml") (Docker.Timeout (Milliseconds 60000.0))
         liftEffect $ log "✅ ScyllaDB is ready!\n"
     )
     -- Stop Docker after tests (always runs!)
     ( \_ -> do
-        Docker.stopService "packages/yoga-scylladb/docker-compose.test.yml"
+        Docker.stopService (Docker.ComposeFile "packages/yoga-scylladb/docker-compose.test.yml")
         liftEffect $ log "✅ Cleanup complete\n"
     )
     -- Run tests
     (\_ -> runSpec [ consoleReporter ] spec)
+  -- Schema tests are pure (no Docker needed)
+  runSpec [ consoleReporter ] SchemaTest.spec
