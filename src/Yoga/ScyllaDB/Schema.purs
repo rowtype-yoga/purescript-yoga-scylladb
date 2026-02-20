@@ -772,7 +772,8 @@ else instance
 class ResolveParamType :: Symbol -> RL.RowList Type -> Type -> Constraint
 class ResolveParamType name rl typ | name rl -> typ
 
-instance (ExtractType entry typ) => ResolveParamType name (RL.Cons name entry tail) typ
+instance Fail (Text "Column not found in table") => ResolveParamType name RL.Nil typ
+else instance (ExtractType entry typ) => ResolveParamType name (RL.Cons name entry tail) typ
 else instance ResolveParamType name tail typ => ResolveParamType name (RL.Cons other entry tail) typ
 
 -- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
