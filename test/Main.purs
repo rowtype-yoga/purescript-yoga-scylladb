@@ -392,21 +392,19 @@ spec = do
 
 main :: Effect Unit
 main = launchAff_ do
+  -- Schema tests are pure (no Docker needed)
+  runSpec [ consoleReporter ] SchemaTest.spec
+
   liftEffect $ log "\n🧪 Starting ScyllaDB Integration Tests (with Docker)\n"
 
   bracket
-    -- Start Docker before tests
     ( do
         liftEffect $ log "⏳ Starting ScyllaDB and waiting for it to be ready (may take 30-60s)..."
         Docker.startService (Docker.ComposeFile "packages/yoga-scylladb/docker-compose.test.yml") (Docker.Timeout (Milliseconds 60000.0))
         liftEffect $ log "✅ ScyllaDB is ready!\n"
     )
-    -- Stop Docker after tests (always runs!)
     ( \_ -> do
         Docker.stopService (Docker.ComposeFile "packages/yoga-scylladb/docker-compose.test.yml")
         liftEffect $ log "✅ Cleanup complete\n"
     )
-    -- Run tests
     (\_ -> runSpec [ consoleReporter ] spec)
-  -- Schema tests are pure (no Docker needed)
-  runSpec [ consoleReporter ] SchemaTest.spec
