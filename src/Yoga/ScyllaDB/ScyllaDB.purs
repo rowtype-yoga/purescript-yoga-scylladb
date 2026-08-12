@@ -3,9 +3,10 @@ module Yoga.ScyllaDB.ScyllaDB where
 import Prelude
 
 import Data.Array as Array
-import Data.Maybe (Maybe)
+import Data.DateTime (DateTime)
+import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype)
-import Data.Nullable (Nullable)
+import Data.Nullable (Nullable, toNullable)
 import Data.Nullable as Nullable
 import Data.Time.Duration (Milliseconds)
 import Effect (Effect)
@@ -306,6 +307,14 @@ instance ToCQLValue Foreign where
 
 instance ToCQLValue UUID where
   toCQLValue = unsafeCoerce
+
+instance ToCQLValue DateTime where
+  toCQLValue = unsafeCoerce
+
+instance ToCQLValue a => ToCQLValue (Maybe a) where
+  toCQLValue = case _ of
+    Nothing -> unsafeCoerce (toNullable Nothing)
+    Just value -> toCQLValue value
 
 instance ToCQLValue a => ToCQLValue (Array a) where
   toCQLValue arr = unsafeCoerce (map toCQLValue arr)

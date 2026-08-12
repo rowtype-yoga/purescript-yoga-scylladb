@@ -9,7 +9,6 @@ import Data.Either (Either(..))
 import Data.Foldable (foldl)
 import Data.Map as Map
 import Data.Maybe (Maybe(..))
-import Data.Nullable (toNullable)
 import Data.String.Regex as Regex
 import Data.String.Regex.Flags as RegexFlags
 import Data.Symbol (class IsSymbol, reflectSymbol)
@@ -486,22 +485,8 @@ else instance HasAnyDMLRL (RL.Cons "delete" Unit rest)
 else instance HasAnyDMLRL rest => HasAnyDMLRL (RL.Cons label typ rest)
 else instance Fail (Text "WHERE requires a preceding SELECT, UPDATE (set), or DELETE") => HasAnyDMLRL RL.Nil
 
--- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
--- FieldToCQLValue: convert a PureScript value to Foreign for CQL
--- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-class FieldToCQLValue :: Type -> Constraint
-class FieldToCQLValue a where
-  fieldToCQLValue :: a -> Foreign
-
-instance FieldToCQLValue a => FieldToCQLValue (Maybe a) where
-  fieldToCQLValue = toNullable >>> unsafeCoerce
-else instance FieldToCQLValue DateTime where
-  fieldToCQLValue = unsafeCoerce
-else instance FieldToCQLValue Scylla.UUID where
-  fieldToCQLValue = unsafeCoerce
-else instance FieldToCQLValue a where
-  fieldToCQLValue = unsafeCoerce
+-- Values use the public Scylla.ToCQLValue extension point. Maybe must unwrap
+-- through that instance so wrapped domain values keep their database encoding.
 
 -- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 -- RecordValuesRL: walk a RowList and extract values from a record
@@ -517,12 +502,12 @@ instance RecordValuesRL RL.Nil row where
 instance
   ( IsSymbol name
   , Row.Cons name typ rest row
-  , FieldToCQLValue typ
+  , Scylla.ToCQLValue typ
   , RecordValuesRL tail row
   ) =>
   RecordValuesRL (RL.Cons name typ tail) row where
   recordValuesRL _ rec =
-    [ fieldToCQLValue (Record.get (Proxy :: Proxy name) rec) ]
+    [ Scylla.toCQLValue (Record.get (Proxy :: Proxy name) rec) ]
       <> recordValuesRL (Proxy :: Proxy tail) rec
 
 -- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

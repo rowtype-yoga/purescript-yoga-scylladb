@@ -2,16 +2,22 @@ module Yoga.ScyllaDB.Schema.Test where
 
 import Prelude
 
-import Foreign (unsafeToForeign)
+import Data.Array as Array
+import Data.Maybe (Maybe(..), fromJust)
+import Foreign (Foreign, unsafeToForeign)
+import Partial.Unsafe (unsafePartial)
 import Unsafe.Coerce (unsafeCoerce)
 import Type.Function (type (#))
 import Type.Proxy (Proxy(..))
 import Data.DateTime (DateTime)
-import Data.Maybe (Maybe)
 import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (shouldEqual)
 import Yoga.ScyllaDB.ScyllaDB as Scylla
 import Yoga.ScyllaDB.Schema as S
+
+foreign import foreignTypeName :: Foreign -> String
+foreign import foreignStringValue :: Foreign -> String
+
 
 type UsersTable = S.Table "users"
   ( id :: Scylla.UUID # S.PartitionKey
@@ -31,6 +37,15 @@ type EventsTable = S.Table "events"
   , event_time :: DateTime # S.ClusteringKey
   , data :: String # S.Static
   , value :: Number
+  )
+
+newtype EncodedValue = EncodedValue String
+
+instance Scylla.ToCQLValue EncodedValue where
+  toCQLValue _ = unsafeToForeign "encoded"
+
+type EncodedTable = S.Table "encoded"
+  ( value :: Maybe EncodedValue
   )
 
 spec :: Spec Unit
@@ -111,6 +126,19 @@ spec = do
 
       it "maps Maybe Int to int" do
         S.cqlTypeName (Proxy :: Proxy (Maybe Int)) `shouldEqual` "int"
+
+    describe "ToCQLValue" do
+
+      it "unwraps Maybe through the inner CQL value conversion" do
+        let encoded = Scylla.toCQLValue (Just (EncodedValue "raw") :: Maybe EncodedValue)
+        foreignTypeName encoded `shouldEqual` "string"
+        foreignStringValue encoded `shouldEqual` "encoded"
+        foreignTypeName (Scylla.toCQLValue (Nothing :: Maybe EncodedValue)) `shouldEqual` "null"
+
+      it "uses ToCQLValue when extracting typed insert values" do
+        let S.Q query = S.from (Proxy :: Proxy EncodedTable) # S.insert { value: Just (EncodedValue "raw") }
+        Array.length query.values `shouldEqual` 1
+        foreignStringValue (unsafePartial $ fromJust $ Array.head query.values) `shouldEqual` "encoded"
 
     describe "Builder: SELECT" do
 
